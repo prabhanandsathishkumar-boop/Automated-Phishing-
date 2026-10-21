@@ -1,0 +1,47 @@
+services:
+  phishbot:
+    build: .
+    container_name: phishbot
+    restart: unless-stopped
+    env_file: .env
+    environment:
+      PHISHBOT_HOST: 0.0.0.0
+      PHISHBOT_PORT: "8000"
+    ports:
+      # Bound to localhost: n8n reaches it over the compose network, nothing
+      # else needs to.
+      - "127.0.0.1:8000:8000"
+    networks: [phishnet]
+
+  n8n:
+    image: n8nio/n8n:latest
+    container_name: n8n
+    restart: unless-stopped
+    depends_on:
+      - phishbot
+    environment:
+      N8N_HOST: ${N8N_HOST:-localhost}
+      N8N_PORT: "5678"
+      N8N_PROTOCOL: http
+      WEBHOOK_URL: ${WEBHOOK_URL:-http://localhost:5678/}
+      GENERIC_TIMEZONE: ${TZ:-UTC}
+      # The workflow reads PHISHBOT_URL / PHISHBOT_API_KEY from $env expressions.
+      N8N_BLOCK_ENV_ACCESS_IN_NODE: "false"
+      PHISHBOT_URL: http://phishbot:8000
+      PHISHBOT_API_KEY: ${PHISHBOT_API_KEY:-}
+      N8N_DIAGNOSTICS_ENABLED: "false"
+      N8N_RUNNERS_ENABLED: "true"
+    ports:
+      - "5678:5678"
+    volumes:
+      - n8n_data:/home/node/.n8n
+      # Import the reference workflow from the n8n UI: Workflows -> Import from file
+      - ./n8n:/workflows:ro
+    networks: [phishnet]
+
+volumes:
+  n8n_data:
+
+networks:
+  phishnet:
+    driver: bridge

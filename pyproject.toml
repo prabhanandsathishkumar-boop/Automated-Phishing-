@@ -1,0 +1,41 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "phishbot"
+version = "1.0.0"
+description = "Automated phishing investigation bot with n8n integration"
+readme = "README.md"
+requires-python = ">=3.10"
+license = { text = "MIT" }
+dependencies = [
+    "fastapi>=0.115",
+    "uvicorn[standard]>=0.34",
+    "pydantic>=2.10",
+    "pydantic-settings>=2.7",
+    "python-multipart>=0.0.20",
+    "httpx>=0.28",
+]
+
+[project.optional-dependencies]
+dns = ["dnspython>=2.7"]
+domains = ["tldextract>=5.1"]
+dev = ["pytest>=8.3", "pytest-asyncio>=0.25"]
+
+[project.scripts]
+phishbot = "phishbot.cli:main"
+
+[tool.setuptools.packages.find]
+include = ["phishbot*"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+asyncio_mode = "auto"
+asyncio_default_fixture_loop_scope = "function"
+filterwarnings = ["ignore::DeprecationWarning"]
+
+[tool.pyright]
+include = ["phishbot", "tests"]
+extraPaths = ["."]
+reportMissingImports = "warning"
